@@ -1,5 +1,5 @@
 // Include libraries needed for this project
-#include <Pixy2.h>  // Allows communication with the Pixy2 camera
+#include <Pixy2.h>  // Allows communication with the Pixy2 cameras
 #include <Servo.h>  // Controls the servo motor for the claw
 #include <CytronMotorDriver.h>  // Controls the left and right drive motors
 
