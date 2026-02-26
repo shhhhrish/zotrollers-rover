@@ -11,7 +11,10 @@ CytronMD rightMotor(PWM_DIR, 9, 10); // Right motor: PWM on Pin 9, DIR on Pin 10
 Pixy2 pixy;
 Servo claw;
 
-// Constants (DO NOT CHANGE)
+// Constants
+const int SENSOR1 = A0;
+const int SENSOR2 = A1;
+const int SENSOR3 = A2;
 const int CENTER_X = 150;     // The x-position that represents the center of the camera's view
 const int TARGET_WIDTH = 200; // The object's width when it is close enough to grab
 const float Kp = 1.5;         // Proportional gain for turning control (used for feedback)
@@ -21,13 +24,54 @@ const int FORWARD_SPEED = 150; // Speed for moving forward when approaching the 
 const int TURN_THRESHOLD = 5; // How close the object must be to the center before moving forward
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(9600);
+    pinMode(SENSOR1, INPUT);
+    pinMode(SENSOR2, INPUT);
+    pinMode(SENSOR3, INPUT);
     claw.attach(5);  // Attach the servo motor to digital pin 5
     claw.write(0);   // Start with the claw open
     pixy.init();     // Initialize Pixy2 camera
 }
 
 void loop() {
+    /*
+    // Read Sensors
+    int s1 = digitalRead(SENSOR1);
+    int s2 = digitalRead(SENSOR2);
+    int s3 = digitalRead(SENSOR3);
+
+    s1 *= 1;
+    s2 *= 2;
+    s3 *= 4;
+
+    Serial.println(s1);
+    Serial.println(s2);
+    Serial.println(s3);
+
+    switch(s1 + s2 + s3) {
+        case 1:
+            Serial.println("Left IR");
+            break;
+        case 2:
+            Serial.println("Middle IR");
+            break;
+        case 3:
+            Serial.println("Left + Middle IR");
+            break;
+        case 4:
+            Serial.println("Right IR");
+            break;
+        case 5:
+            Serial.println("Left + Right IR (Wtf)");
+            break;
+        case 6:
+            Serial.println("Middle + Right IR");
+            break;
+        case 7:
+            Serial.println("ALL IR");
+            break;
+    }
+    */
     trackObject(); // Call the function to detect and approach the object
 }
 
@@ -49,7 +93,7 @@ void trackObject() {
         if (error > TURN_THRESHOLD) { 
             turnRight(turn_speed);
         }
-        // Object is to the left
+        // Object is to the left 
         else if (error < -TURN_THRESHOLD) {
             turnLeft(turn_speed);
         }
@@ -100,3 +144,4 @@ void stopMotors() {
     leftMotor.setSpeed(0);
     rightMotor.setSpeed(0);
 }
+
