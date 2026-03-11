@@ -9,14 +9,14 @@
 #include <CytronMotorDriver.h>  // Controls the left and right drive motors
 #include <PID_v1.h>             // PID library
 #include <Pixy2.h>              // Allows communication with the Pixy2 cameras
-#include <Servo.h>              // Controls the servo motor for the claw
+//#include <Servo.h>              // Controls the servo motor for the claw
 
 // ------- Hardware Configuration -------
 CytronMD leftMotor(PWM_DIR, 6, 7);    // Left motor: PWM on Pin 11, DIR on Pin 13
 CytronMD rightMotor(PWM_DIR, 3, 2);     // Right motor: PWM on Pin 9, DIR on Pin 8
 
 Pixy2 pixy;
-Servo claw;
+//Servo claw;
 
 const int SENSOR1 = A0;     // Left
 const int SENSOR2 = A1;     // Center
@@ -33,13 +33,13 @@ const double SENSOR3_WEIGHT =  1.0;  // Right
 // ------- Motor Constants -------
 const int BASE_SPEED = 150;   // Default speed
 const int MAX_SPEED = 255;   // Max speed
-const int MIN_SPEED = 60;    // Min speed
+const int MIN_SPEED = 20;    // Min speed
 const int RECOVER_SPEED = 60;   // Speed when recovering
 
 // ------- PID Constants -------
-double Kp = 20.0;   // proportional to current error
-double Ki = 0.0;    // accumulated error (removes steady-state)
-double Kd = 0.0;    // rate of change  (dampens oscillation)
+double Kp = 95.0;   // proportional to current error
+double Ki = 0.4;    // accumulated error (removes steady-state)
+double Kd = 0.8;    // rate of change  (dampens oscillation)
 
 // ------- PID Variables -------
 double pidInput = 0.0;   // Current error  (fed IN)
@@ -54,7 +54,7 @@ const int SAMPLE_COUNT = 5;   // readings per sensor per loop
 const int SAMPLE_THRESHOLD = 3;   // minimum high reads to count as ON
 
 // ------- Recovery Constants -------
-const unsigned long LOSS_MS = 80;
+const unsigned long LOSS_MS = 1200;
 unsigned long lineLostAt = 0;
 bool linePreviouslyLost = false;
 
@@ -63,7 +63,7 @@ enum RecoveryDir { NONE, RECOVER_LEFT, RECOVER_RIGHT };
 RecoveryDir lastTurnDir = NONE;
 
 // ------- Stop Line Constants -------
-const unsigned long STOP_CONFIRM_MS = 150;
+const unsigned long STOP_CONFIRM_MS = 500;
 unsigned long stopLineSeenAt = 0;
 bool stopLineArmed = false;
 
@@ -71,7 +71,7 @@ bool stopLineArmed = false;
 const int PIXY_CENTER_X = 158;
 const int PIXY_TURN_THRESH =  10;
 const int PIXY_GRAB_WIDTH = 180;
-const int APPROACH_SPEED = 120;
+const int APPROACH_SPEED = 150;
 const int PIXY_TURN_SPEED =  90;
 const float Kp_vision =  1.2;
 
@@ -103,8 +103,8 @@ void setup() {
     // Enable continuous mode
     linePID.SetMode(AUTOMATIC);
 
-    claw.attach(5);
-    claw.write(CLAW_OPEN);
+    //claw.attach(9);
+    //claw.write(CLAW_OPEN);
     pixy.init();
 
     Serial.println("Rover: Line Follow");
@@ -147,7 +147,7 @@ int readSensor(int pin) {
 
 // ------ PID line following ------
 void runLineFollow() {
-    // each sensor is sampled 5 times
+    // Each sensor is sampled 5 times
     int s1 = readSensor(SENSOR1);
     int s2 = readSensor(SENSOR2);
     int s3 = readSensor(SENSOR3);
@@ -293,7 +293,7 @@ void runApproachCan() {
 void runGrabCan() {
     stopMotors();
     delay(250);
-    claw.write(CLAW_CLOSED);
+    //claw.write(CLAW_CLOSED);
     Serial.println("------ CAN GRABBED ------");
 
     // Hold forever
