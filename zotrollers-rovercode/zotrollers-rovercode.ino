@@ -114,8 +114,8 @@ const float Kp_vision = 1.2;        // Proprtional gain for Pixy steering
 // ------- Servo Constants -------
 const int CLAW_OPEN = 140;      // Servo angle used for open claw
 const int CLAW_CLOSED = 40;     // Servo angle used for closed claw
-const int CLAW_DOWN = 0;        // Arm lowered position (ready to grab)
-const int CLAW_UP = 40;         // Arm raised position (holding can)
+const int CLAW_DOWN = 10;        // Arm lowered position (ready to grab)
+const int CLAW_UP = 50;         // Arm raised position (holding can)
 
 // ------- Rover State Tacker -------
 // Rover behaviour is divided into four states
@@ -150,7 +150,7 @@ void setup() {
     clawClose.attach(8);
     clawClose.write(CLAW_OPEN);     // Start with claw open
     clawLift.attach(9);
-    clawLift.write(CLAW_UP);      // Start with arm up
+    clawLift.write(CLAW_DOWN);      // Start with arm up
 
     pixy.init();
 
@@ -194,7 +194,7 @@ int readSensor(int pin) {
 // ------- Line Follow State -------
 // Main line-following logic using PID. Reads the three IR sensors,
 // computes average error, and steers the motors to keep
-// the error at zero (centred on line)
+// The error at zero (centred on line)
 // Also detects the stop line and manages the line loss timer
 void runLineFollow() {
     // Each sensor is sampled SAMPLE_COUNT times
@@ -364,7 +364,6 @@ void runApproachCan() {
 // then raises the arm.  Loops forever afterwards
 void runGrabCan() {
     stopMotors();
-    clawLife.write(CLAW_DOWN);      // Lower arm to grab can
     delay(250);                     // Settle before activating servo
     clawClose.write(CLAW_CLOSED);   // Close around the can
     delay(100);                     // Wait to close fully
@@ -373,8 +372,8 @@ void runGrabCan() {
 
     // Hold forever
     while (true) { 
-        delay(100);
-        clawLift.write(CLAW_UP);
+        clawClose.write(CLAW_CLOSED);   // Close around the can
+        clawLift.write(CLAW_UP);        // Raise to lift the can
     }
 }
 
