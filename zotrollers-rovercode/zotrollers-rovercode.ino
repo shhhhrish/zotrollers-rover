@@ -9,14 +9,16 @@
 #include <CytronMotorDriver.h>  // Controls the left and right drive motors
 #include <PID_v1.h>             // PID library
 #include <Pixy2.h>              // Allows communication with the Pixy2 cameras
-//#include <Servo.h>              // Controls the servo motor for the claw
+#include <Servo.h>              // Controls the servo motor for the claw
 
 // ------- Hardware Configuration -------
-CytronMD leftMotor(PWM_DIR, 6, 7);    // Left motor: PWM on Pin 11, DIR on Pin 13
-CytronMD rightMotor(PWM_DIR, 3, 2);     // Right motor: PWM on Pin 9, DIR on Pin 8
+CytronMD leftMotor(PWM_DIR, 6, 7);    // Left motor: PWM on Pin 6, DIR on Pin 7
+CytronMD rightMotor(PWM_DIR, 3, 2);     // Right motor: PWM on Pin 3, DIR on Pin 2
+
+Servo clawLift;
+Servo clawClose;
 
 Pixy2 pixy;
-//Servo claw;
 
 const int SENSOR1 = A0;     // Left
 const int SENSOR2 = A1;     // Center
@@ -58,7 +60,7 @@ const unsigned long LOSS_MS = 1200;
 unsigned long lineLostAt = 0;
 bool linePreviouslyLost = false;
 
-// Lost-line state
+// ------ Lost-line state ------
 enum RecoveryDir { NONE, RECOVER_LEFT, RECOVER_RIGHT };
 RecoveryDir lastTurnDir = NONE;
 
@@ -69,15 +71,17 @@ bool stopLineArmed = false;
 
 // ------- Pixy Constants -------
 const int PIXY_CENTER_X = 158;
-const int PIXY_TURN_THRESH =  10;
+const int PIXY_TURN_THRESH = 10;
 const int PIXY_GRAB_WIDTH = 180;
 const int APPROACH_SPEED = 150;
-const int PIXY_TURN_SPEED =  90;
-const float Kp_vision =  1.2;
+const int PIXY_TURN_SPEED = 90;
+const float Kp_vision = 1.2;
 
 // ------- Servo Constants -------
-const int CLAW_OPEN = 0;
-const int CLAW_CLOSED = 90;
+const int CLAW_OPEN = 140;
+const int CLAW_CLOSED = 40;
+const int CLAW_DOWN = 0;
+const int CLAW_UP = 40;
 
 // Rover State Tracker
 enum RoverState {
@@ -103,11 +107,13 @@ void setup() {
     // Enable continuous mode
     linePID.SetMode(AUTOMATIC);
 
-    //claw.attach(9);
-    //claw.write(CLAW_OPEN);
+    clawClose.attach(8);
+    clawClose.write(CLAW_OPEN);
+    clawLift.attach(9);
+    clawLift.write(CLAW_DOWN);
     pixy.init();
 
-    Serial.println("Rover: Line Follow");
+    Serial.println("------ Line Follow ------");
 }
 
 void loop() {
@@ -115,15 +121,12 @@ void loop() {
         case LINE_FOLLOW:
             runLineFollow();
             break;
-
         case STOP_CONFIRM:
             runStopConfirm();
             break;
-
         case APPROACH_CAN:
             runApproachCan();
             break;
-
         case GRAB_CAN:
             runGrabCan();
             break;
@@ -158,7 +161,7 @@ void runLineFollow() {
         if (!stopLineArmed) {
             stopLineArmed  = true;
             stopLineSeenAt = millis();
-            Serial.println("Potential Stop Line");
+            Serial.println("------ Potential Stop Line ------");
         }
         driveMotors(BASE_SPEED / 2, BASE_SPEED / 2);
 
@@ -233,7 +236,7 @@ void runStopConfirm() {
     stopMotors();
     delay(300);
     state = APPROACH_CAN;
-    Serial.println("=== → APPROACH_CAN ===");
+    Serial.println("------ APPROACH CAN ------");
 }
 
 // ------ Approch Can ------
@@ -243,7 +246,7 @@ void runApproachCan() {
 
     if (pixy.ccc.numBlocks == 0) {
         // Can not visible, spin slowly to search
-        Serial.println("Can not foundw, searching...");
+        Serial.println("Can not found, searching...");
         driveMotors(-PIXY_TURN_SPEED, PIXY_TURN_SPEED);   // spin left to search
         return;
     }
@@ -267,7 +270,7 @@ void runApproachCan() {
     if (obj_width >= PIXY_GRAB_WIDTH) {
         stopMotors();
         state = GRAB_CAN;
-        Serial.println("------ GRAB_CAN ------");
+        Serial.println("------ GRAB CAN ------");
         return;
     }
 
@@ -293,18 +296,21 @@ void runApproachCan() {
 void runGrabCan() {
     stopMotors();
     delay(250);
-    //claw.write(CLAW_CLOSED);
+    clawClose.write(CLAW_CLOSED);
+    delay(100);
+    clawLift.write(CLAW_UP);
     Serial.println("------ CAN GRABBED ------");
 
     // Hold forever
     while (true) { 
-        delay(1000); 
+        delay(100);
+        clawLift.write(CLAW_UP);
     }
 }
 
 // ------ Line-lost Recovery ------
 void recoverLine() {
-    Serial.println("LINE LOST -> recovering");
+    Serial.println("LINE LOST");
     if (lastTurnDir == RECOVER_LEFT) {
         driveMotors(-RECOVER_SPEED,  RECOVER_SPEED);
     } 
