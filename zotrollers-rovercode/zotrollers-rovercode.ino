@@ -57,7 +57,7 @@ const double SENSOR2_WEIGHT =  0.0;  // Center
 const double SENSOR3_WEIGHT =  1.0;  // Right
 
 // ------- Motor Constants -------
-const int BASE_SPEED = 150;   // Default speed (0-255)
+const int BASE_SPEED = 220;   // Default speed (0-255)
 const int MAX_SPEED = 255;   // Max speed
 const int MIN_SPEED = 20;    // Min speed
 const int RECOVER_SPEED = 60;   // Slow speed used when recovering
@@ -66,9 +66,9 @@ const int RECOVER_SPEED = 60;   // Slow speed used when recovering
 /* Kp – scales correction to current error (main steering force)
    Ki – corrects accumulated long-term drift
    Kd – dampens oscillation by reacting to rate of change */
-double Kp = 95.0;
+double Kp = 145.0;
 double Ki = 0.4;
-double Kd = 0.8; 
+double Kd = 0.6; 
 
 // ------- PID Variables -------
 double pidInput = 0.0;      // Weighted sensor error fed into the PID
@@ -87,7 +87,7 @@ const int SAMPLE_THRESHOLD = 3;   // minimum high reads to count as ON
 // ------- Recovery Constants -------
 // Before entering recovery mode, the rover waits
 // to confirm the line is genuinely gone
-const unsigned long LOSS_MS = 1200; // Time (ms) to hold last output before recovering
+const unsigned long LOSS_MS = 1900; // Time (ms) to hold last output before recovering
 unsigned long lineLostAt = 0;       // Timestamp of when the line was first lost in ms
 bool linePreviouslyLost = false;    // True once the loss timer has started
 
@@ -99,7 +99,7 @@ RecoveryDir lastTurnDir = NONE;
 // ------- Stop Line Constants -------
 // A stop line is detected when all three sensors are ON simultaneously
 // A confirmation timer prevents false triggers
-const unsigned long STOP_CONFIRM_MS = 500;  // Time (ms) all-3 must stay ON to confirm
+const unsigned long STOP_CONFIRM_MS = 85;  // Time (ms) all-3 must stay ON to confirm
 unsigned long stopLineSeenAt = 0;           // Timestamp of first all-3 reading
 bool stopLineArmed  = false;                // True once the first all-3 reading occurs
 
@@ -107,7 +107,7 @@ bool stopLineArmed  = false;                // True once the first all-3 reading
 const int PIXY_CENTER_X = 158;      // Midpoint of Pixy frame
 const int PIXY_TURN_THRESH = 10;    // Error within this are ignored
 const int PIXY_GRAB_WIDTH = 180;    // Block width at which can is close enough to grab
-const int APPROACH_SPEED = 150;     // Forward speed used when approching
+const int APPROACH_SPEED = 210;     // Forward speed used when approching
 const int PIXY_TURN_SPEED = 90;     // Spin speed used when approching
 const float Kp_vision = 1.2;        // Proprtional gain for Pixy steering
 
@@ -115,7 +115,7 @@ const float Kp_vision = 1.2;        // Proprtional gain for Pixy steering
 const int CLAW_OPEN = 140;      // Servo angle used for open claw
 const int CLAW_CLOSED = 40;     // Servo angle used for closed claw
 const int CLAW_DOWN = 10;        // Arm lowered position (ready to grab)
-const int CLAW_UP = 50;         // Arm raised position (holding can)
+const int CLAW_UP = 60;         // Arm raised position (holding can)
 
 // ------- Rover State Tacker -------
 // Rover behaviour is divided into four states
@@ -147,9 +147,9 @@ void setup() {
     linePID.SetMode(AUTOMATIC);
 
     // Initialise servos
-    clawClose.attach(8);
+    clawClose.attach(10);
     clawClose.write(CLAW_OPEN);     // Start with claw open
-    clawLift.attach(9);
+    clawLift.attach(4);
     clawLift.write(CLAW_DOWN);      // Start with arm up
 
     pixy.init();
@@ -297,7 +297,7 @@ void runLineFollow() {
 // time to settle before going to pixy
 void runStopConfirm() {
     stopMotors();
-    delay(300);
+    delay(250);
     state = APPROACH_CAN;
     Serial.println("------ APPROACH CAN ------");
 }
@@ -364,14 +364,15 @@ void runApproachCan() {
 // then raises the arm.  Loops forever afterwards
 void runGrabCan() {
     stopMotors();
-    delay(250);                     // Settle before activating servo
+    delay(50);                     // Settle before activating servo
     clawClose.write(CLAW_CLOSED);   // Close around the can
-    delay(100);                     // Wait to close fully
+    delay(50);                     // Wait to close fully
     clawLift.write(CLAW_UP);        // Raise to lift the can
     Serial.println("------ CAN GRABBED ------");
 
     // Hold forever
     while (true) { 
+        delay(1000);
         clawClose.write(CLAW_CLOSED);   // Close around the can
         clawLift.write(CLAW_UP);        // Raise to lift the can
     }
