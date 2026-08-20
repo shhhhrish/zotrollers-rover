@@ -2,8 +2,6 @@
 
 Autonomous line-following rover built for **ENGR 7B (Winter 2026)**. The rover follows a black tape line using three IR sensors and a PID controller, detects a horizontal stop line, then switches to vision-guided navigation with a Pixy2 camera to locate, approach, and grab a red can with a two-servo claw.
 
-**Team:** Shrish Potla, Vince Lu, Mateyo Leon, Neeraj Bhuvaneshwaran, Sean Amet
-
 ## How It Works
 
 The rover runs as a simple state machine with four states:
@@ -11,7 +9,7 @@ The rover runs as a simple state machine with four states:
 | State | Description |
 |---|---|
 | `LINE_FOLLOW` | Follows the tape line using a PID controller fed by three IR sensors. |
-| `STOP_CONFIRM` | Brief pause after a stop line is confirmed, letting the rover settle before switching to vision. |
+| `STOP_CONFIRM` | Brief pause to make sure stop line is confirmed and not a misreading on the line path |
 | `APPROACH_CAN` | Uses the Pixy2 camera to locate the red can and drive toward it. |
 | `GRAB_CAN` | Closes the claw around the can and lifts it. Final state — holds forever. |
 
@@ -24,7 +22,7 @@ If all sensors momentarily read off the line, the rover holds its last known cor
 A stop line is detected when all three IR sensors read ON at the same time. This must hold for a short confirmation window to avoid false triggers from noise or line intersections before the rover stops and transitions to vision navigation.
 
 ### Can Approach & Grab
-Once in vision mode, the Pixy2 reports the largest detected color block (the red can). The rover steers toward the can's horizontal offset from center while driving forward, using a proportional turn correction. When the can's detected width crosses a threshold (meaning it's close enough), the rover stops, closes its claw, and lifts the arm.
+Once in vision mode, the Pixy2 reports the largest detected color block (the red can). The rover steers toward the can's horizontal offset from center while driving forward, using a proportional turn correction. When the can's detected width crosses a threshold, the rover stops, closes its claw, and lifts the arm.
 
 ## Hardware
 
@@ -44,7 +42,7 @@ Once in vision mode, the Pixy2 reports the largest detected color block (the red
 
 ```
 zotrollers-rovercode/
-└── zotrollers-rovercode.ino   # Main Arduino sketch (state machine, PID, Pixy, claw control)
+└── zotrollers-rovercode.ino   # Main Arduino sketch
 ```
 
 ## Tuning
@@ -58,10 +56,3 @@ Key constants live at the top of `zotrollers-rovercode.ino`:
 - **Line loss grace period:** `LOSS_MS`
 - **Vision:** `PIXY_CENTER_X`, `PIXY_TURN_THRESH`, `PIXY_GRAB_WIDTH`, `Kp_vision`
 - **Claw angles:** `CLAW_OPEN`, `CLAW_CLOSED`, `CLAW_DOWN`, `CLAW_UP`
-
-## Usage
-
-1. Open `zotrollers-rovercode/zotrollers-rovercode.ino` in the Arduino IDE.
-2. Install the libraries listed above via the Library Manager.
-3. Select the correct board/port and upload.
-4. Open the Serial Monitor at 9600 baud to view live sensor, PID, and state debug output.
